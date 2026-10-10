@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Neyerly Bustamante Orellana">
+<meta name="theme-color" content="#6d28d9">
+<title>Función Cúbica — Laboratorio Interactivo</title>
+<style>
+  :root{
+    --v1:#6d28d9; --v2:#8b5cf6; --pk:#db2777;
+    --bg:#f6f3ff; --line:#e9e0fb; --txt:#31264a; --mut:#8a7fa8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+  header{background:linear-gradient(120deg,var(--v1),var(--pk));color:#fff;
+         padding:18px 16px;text-align:center;border-radius:0 0 22px 22px;
+         box-shadow:0 8px 24px rgba(109,40,217,.25)}
+  header h1{margin:0;font-size:clamp(1.2rem,4vw,1.9rem)}
+  header p{margin:6px auto 0;max-width:620px;opacity:.95;font-size:.9rem}
+  .fx{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);
+      padding:5px 14px;border-radius:999px;margin-top:8px;font-weight:700;font-size:.95rem}
+  #errBox{display:none;background:#fde8e8;color:#b91c1c;border:2px solid #fca5a5;
+          padding:10px 14px;border-radius:12px;max-width:1100px;margin:12px auto 0;
+          font-size:.9rem;font-weight:600}
+  noscript div{background:#fde8e8;color:#b91c1c;padding:12px;text-align:center;font-weight:700}
+
+  .layout{display:grid;grid-template-columns:0.9fr 1.25fr;gap:16px;max-width:1150px;
+          margin:18px auto;padding:0 14px;grid-auto-rows:min-content}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;
+        box-shadow:0 8px 24px rgba(109,40,217,.07)}
+  .card h2{margin:0 0 10px;font-size:1.05rem;color:var(--v1);display:flex;align-items:center;gap:8px}
+  #cCard{grid-area:1/1}
+  #gCard{grid-area:1/2/4/3;position:sticky;top:12px;align-self:start}
+  #tCard{grid-area:2/1}
+  #iCard{grid-area:3/1}
+  #qCard{grid-area:4/1/5/3}
+
+  /* ---- controles ---- */
+  .coefgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .coef{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;
+        padding:9px 10px;border:1.5px solid var(--line);border-radius:14px;background:#fbf9ff;
+        transition:border-color .2s}
+  .coef:hover{border-color:var(--v2)}
+  .coef .name{grid-column:1/-1;font-weight:800;font-size:.95rem;color:#4c1d95}
+  .coef .name small{font-weight:500;color:var(--mut);font-size:.72rem}
+  .step{width:40px;height:40px;border:none;border-radius:11px;cursor:pointer;font-size:1.25rem;
+        font-weight:800;color:#fff;background:linear-gradient(135deg,var(--v2),var(--pk));
+        box-shadow:0 2px 6px rgba(139,92,246,.3);user-select:none;-webkit-user-select:none;
+        touch-action:manipulation}
+  .step:active{transform:scale(.9)}
+  .coef input{width:100%;min-width:0;height:40px;text-align:center;font-size:1.05rem;font-weight:800;
+        color:var(--v1);border:2px solid #e5d9fb;border-radius:11px;background:#fff}
+  .coef input:focus{outline:none;border-color:var(--v2)}
+  .coef input::-webkit-outer-spin-button,.coef input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .coef input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  #eq{font-family:'Cambria Math',Georgia,serif;font-size:clamp(1rem,3vw,1.3rem);font-weight:700;
+      color:#5b21b6;text-align:center;background:linear-gradient(120deg,#f3edff,#ffeef6);
+      border:1px dashed #d8c6fa;padding:10px;border-radius:14px;margin:12px 0 10px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1.5px solid #e2d5fb;background:#f6f1ff;color:#5b21b6;border-radius:999px;
+        padding:6px 12px;font-weight:700;font-size:.8rem;cursor:pointer}
+  .chip:hover{background:var(--v1);color:#fff}
+  .toggles{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+  .tg{display:flex;align-items:center;gap:7px;font-size:.86rem;font-weight:600;cursor:pointer}
+  .tg input{display:none}
+  .tg .sw{width:40px;height:22px;background:#ddd3f5;border-radius:999px;position:relative;transition:.2s}
+  .tg .sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;
+        border-radius:50%;transition:.2s}
+  .tg input:checked+.sw{background:var(--pk)}
+  .tg input:checked+.sw::after{left:21px}
+  #warnA{display:none;background:#fef9c3;border:1.5px solid #fde047;color:#854d0e;
+         padding:8px 12px;border-radius:12px;font-size:.85rem;margin-top:10px}
+
+  /* ---- gráfica ---- */
+  .ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;
+         margin-bottom:10px;flex-wrap:wrap}
+  #eqMini{font-family:'Cambria Math',Georgia,serif;font-weight:800;color:#fff;
+          background:linear-gradient(135deg,var(--v1),var(--pk));padding:5px 13px;border-radius:999px;
+          font-size:.9rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gtools{display:flex;gap:6px;align-items:center;margin-left:auto;flex-shrink:0}
+  .gtools .mini{padding:6px 11px;font-size:.82rem;border-radius:10px}
+  #fsBtn{border:1.5px solid #e2d5fb;background:#f6f1ff;color:#5b21b6;border-radius:10px;
+         padding:6px 12px;font-weight:800;font-size:.82rem;cursor:pointer}
+  #cv{width:100%;display:block;border:1px solid var(--line);border-radius:14px;
+      background:#fffdf9;touch-action:none;cursor:crosshair}
+  .gbtns{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  .btn{border:none;border-radius:11px;padding:9px 15px;font-weight:800;cursor:pointer;color:#fff;
+       background:linear-gradient(135deg,var(--v2),var(--pk));font-size:.86rem}
+  .btn:active{transform:scale(.94)}
+  .btn.ghost{background:#f1eafe;color:#5b21b6}
+  .hint{font-size:.8rem;color:var(--mut);margin:7px 0 0;text-align:center}
+
+  /* ---- controles dentro del modo ampliar ---- */
+  #fsCtl{display:none;margin-top:12px;border-top:2px dashed var(--line);padding-top:10px}
+  #fsCtl .fstitle{font-weight:800;color:#4c1d95;font-size:.9rem;margin:0 0 8px;text-align:center}
+  body.fsopen #gCard{position:fixed;inset:8px;z-index:999;overflow:auto;
+        box-shadow:0 24px 70px rgba(0,0,0,.45)}
+  body.fsopen{overflow:hidden}
+  body.fsopen #fsCtl{display:block}
+  body.fsopen #eq{display:none}
+  body.fsopen .coefgrid{grid-template-columns:repeat(4,1fr)}
+  body.fsopen .coef .name{font-size:.88rem}
+
+  /* ---- tabla ---- */
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:4px}
+  th{background:linear-gradient(135deg,var(--v2),var(--pk));color:#fff;padding:9px;font-size:.88rem}
+  th:first-child{border-radius:12px 0 0 0}th:last-child{border-radius:0 12px 0 0}
+  td{padding:5px;border-bottom:1px solid #f1ebfd;text-align:center}
+  .xin{width:100%;max-width:130px;padding:8px;border:2px solid #e5d9fb;border-radius:10px;
+       font-size:1rem;font-weight:700;text-align:center}
+  .xin:focus{outline:none;border-color:var(--v2)}
+  .yout{font-weight:800;color:var(--pk)}
+
+  /* ---- análisis / QR / pie ---- */
+  #iCard ul{margin:4px 0;padding:0;list-style:none;line-height:1.85;font-size:.9rem}
+  #iCard li::before{content:'● ';color:var(--pk);font-size:.7rem}
+  #iCard b{color:var(--v1)}
+  ol.steps{padding-left:20px;font-size:.88rem;line-height:1.75;margin:6px 0 10px}
+  #qrUrl{width:100%;padding:10px;border:2px solid #e5d9fb;border-radius:12px;font-size:.95rem}
+  #qrImg{display:none;margin:12px auto 0;border:8px solid #fff;border-radius:10px;
+         box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:190px}
+  #qrErr{display:none;color:#be123c;font-size:.85rem;text-align:center}
+  footer{background:#2e1065;color:#fff;text-align:center;padding:18px 14px;margin-top:24px;line-height:1.7}
+  footer b{color:#fcd34d}
+
+  /* ============ MÓVIL ============ */
+  @media(max-width:820px){
+    header{padding:14px 12px;border-radius:0 0 18px 18px}
+    .layout{display:flex;flex-direction:column;gap:10px;padding:0 8px}
+    #gCard{order:-1;position:sticky;top:5px;z-index:60;padding:8px 9px 9px}
+    #gCard h2{display:none}
+    #eqMini{font-size:.7rem;padding:4px 10px;flex:1}
+    .gtools{gap:4px}
+    .gtools .mini{padding:5px 8px;font-size:.72rem}
+    #fsBtn{padding:5px 9px;font-size:.72rem}
+    .card{padding:12px;border-radius:15px}
+    .coefgrid{grid-template-columns:1fr 1fr;gap:6px}
+    .coef{padding:6px 7px;gap:5px;border-radius:11px}
+    .coef .name{font-size:.8rem}
+    .coef .name small{display:none}
+    .step{width:32px;height:34px;font-size:1.05rem;border-radius:9px;box-shadow:none}
+    .coef input{height:34px;font-size:.95rem;border-radius:9px}
+    #eq{font-size:.95rem;padding:8px;margin:10px 0 8px}
+    .chip{padding:5px 10px;font-size:.72rem}
+    .tg{font-size:.78rem}
+    .tg .sw{width:36px;height:20px}
+    .tg .sw::after{width:14px;height:14px}
+    .tg input:checked+.sw::after{left:19px}
+    #warnA{font-size:.78rem}
+    .xin{max-width:none;padding:7px;font-size:.95rem}
+    th{padding:7px;font-size:.8rem}
+    #iCard ul{font-size:.83rem;line-height:1.7}
+    body.fsopen .coefgrid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:360px){
+    .step{width:28px;height:32px;font-size:.95rem}
+    .gtools .mini{padding:4px 7px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📈 LABORATORIO DE LA FUNCIÓN CÚBICA</h1>
+  <p>Cambia <b>a, b, c y d</b> escribiendo o pulsando <b>− / +</b> y mira la gráfica cambiar al instante.</p>
+  <span class="fx">f(x) = ax³ + bx² + cx + d</span>
+</header>
+
+<div id="errBox"></div>
+<noscript><div>⚠️ Tu visor NO ejecuta JavaScript. Abre el archivo con CHROME.</div></noscript>
+
+<main class="layout">
+
+  <!-- GRÁFICA -->
+  <section class="card" id="gCard">
+    <div class="ghead">
+      <h2>📊 Gráfica en vivo</h2>
+      <span id="eqMini">f(x) = x³</span>
+      <div class="gtools">
+        <button class="btn ghost mini" id="zin"  type="button" title="Acercar">🔍➕</button>
+        <button class="btn ghost mini" id="zout" type="button" title="Alejar">🔍➖</button>
+        <button class="btn ghost mini" id="zhome" type="button" title="Centrar">🎯</button>
+        <button id="fsBtn" type="button">⛶ Ampliar</button>
+      </div>
+    </div>
+    <div id="graphWrap"><canvas id="cv"></canvas></div>
+    <p class="hint">👆 Toca la curva para leer f(x)</p>
+    <div id="fsCtl">
+      <p class="fstitle">🎛️ Varía los valores aquí también</p>
+      <div id="ctlSlot"></div>
+    </div>
+  </section>
+
+  <!-- CONTROLES -->
+  <section class="card" id="cCard">
+    <h2>🎛️ Coeficientes (valores libres)</h2>
+    <div id="ctlHome">
+      <div class="coefgrid">
+        <div class="coef">
+          <div class="name">a <small>· término cúbico</small></div>
+          <button class="step" data-t="a" data-d="-1" type="button">−</button>
+          <input type="number" id="in-a" value="1" step="any" inputmode="decimal">
+          <button class="step" data-t="a" data-d="1" type="button">+</button>
+        </div>
+        <div class="coef">
+          <div class="name">b <small>· término cuadrático</small></div>
+          <button class="step" data-t="b" data-d="-1" type="button">−</button>
+          <input type="number" id="in-b" value="0" step="any" inputmode="decimal">
+          <button class="step" data-t="b" data-d="1" type="button">+</button>
+        </div>
+        <div class="coef">
+          <div class="name">c <small>· término lineal</small></div>
+          <button class="step" data-t="c" data-d="-1" type="button">−</button>
+          <input type="number" id="in-c" value="0" step="any" inputmode="decimal">
+          <button class="step" data-t="c" data-d="1" type="button">+</button>
+        </div>
+        <div class="coef">
+          <div class="name">d <small>· constante (corte eje Y)</small></div>
+          <button class="step" data-t="d" data-d="-1" type="button">−</button>
+          <input type="number" id="in-d" value="0" step="any" inputmode="decimal">
+          <button class="step" data-t="d" data-d="1" type="button">+</button>
+        </div>
+      </div>
+      <div id="warnA">⚠️ <b>a = 0</b> → la función ya NO es cúbica.</div>
+      <div id="eq">f(x) = x³</div>
+      <div class="chips">
+        <button class="chip ex" data-v="1,0,0,0" type="button">x³</button>
+        <button class="chip ex" data-v="1,0,-3,0" type="button">x³ − 3x</button>
+        <button class="chip ex" data-v="1,-6,9,0" type="button">x³ − 6x² + 9x</button>
+        <button class="chip ex" data-v="1,-6,12,0" type="button">x³ − 6x² + 12x</button>
+        <button class="chip ex" data-v="-1,0,4,0" type="button">−x³ + 4x</button>
+        <button class="chip ex" data-v="0.5,2,-1,3" type="button">½x³ + 2x² − x + 3</button>
+        <button class="chip ex" data-v="0,0,0,0" type="button">Todo 0</button>
+        <button class="chip" id="rndBtn" type="button">🎲</button>
+      </div>
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="tgCurve" checked><span class="sw"></span>Curva</label>
+        <label class="tg"><input type="checkbox" id="tgPts" checked><span class="sw"></span>Puntos</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABLA -->
+  <section class="card" id="tCard">
+    <h2>🧮 Tabla de valores (6 datos)</h2>
+    <table>
+      <thead><tr><th>x (tú escribes)</th><th>f(x) (se calcula)</th></tr></thead>
+      <tbody>
+        <tr><td><input class="xin" type="number" step="any" value="-2" inputmode="decimal"></td><td class="yout">–</td></tr>
+        <tr><td><input class="xin" type="number" step="any" value="-1" inputmode="decimal"></td><td class="yout">–</td></tr>
+        <tr><td><input class="xin" type="number" step="any" value="0" inputmode="decimal"></td><td class="yout">–</td></tr>
+        <tr><td><input class="xin" type="number" step="any" value="1" inputmode="decimal"></td><td class="yout">–</td></tr>
+        <tr><td><input class="xin" type="number" step="any" value="2" inputmode="decimal"></td><td class="yout">–</td></tr>
+        <tr><td><input class="xin" type="number" step="any" value="3" inputmode="decimal"></td><td class="yout">–</td></tr>
+      </tbody>
+    </table>
+    <div class="gbtns">
+      <button class="btn ghost" id="fillBtn" type="button">✨ Rellenar −2 a 3</button>
+      <button class="btn ghost" id="clrBtn" type="button">🧹 Limpiar</button>
+    </div>
+  </section>
+
+  <!-- ANÁLISIS -->
+  <section class="card" id="iCard">
+    <h2>🔍 Análisis automático</h2>
+    <ul>
+      <li><b>Grado:</b> <span id="iGrado">3</span></li>
+      <li><b>Dominio:</b> ℝ · <b>Rango:</b> ℝ</li>
+      <li><b>Corte con eje Y:</b> <span id="iCorteY">(0, 0)</span></li>
+      <li><b>Raíces:</b> <span id="iRaices">—</span></li>
+      <li><b>Máximo / mínimo local:</b> <span id="iCrit">—</span></li>
+      <li><b>Comportamiento:</b> <span id="iColas">sube a la derecha ↗</span></li>
+    </ul>
+  </section>
+
+  <!-- QR -->
+  <section class="card" id="qCard">
+    <h2>📱 Abrir en el celular (QR)</h2>
+    <ol class="steps">
+      <li>Copia el enlace y pégalo aquí 👇</li>
+      <li>Genera el QR y escanéalo con el celular.</li>
+    </ol>
+    <input type="text" id="qrUrl" placeholder="https://tu-pagina.netlify.app">
+    <div class="gbtns"><button class="btn" id="genQr" type="button">🔗 Generar QR</button></div>
+    <img id="qrImg" alt="QR">
+    <p id="qrErr">⚠️ No se pudo generar. Revisa tu internet.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2025 · Derechos de autor: <b>Neyerly Bustamante Orellana</b><br>
+     Colaboración: <b>Gregory Bustamante Rojas</b></p>
+  <p>Informe de Funciones Cúbicas · Matemáticas · Educación Secundaria</p>
+</footer>
+
+<script>
+"use strict";
+function showErr(e){
+  var b=document.getElementById('errBox');
+  if(b){b.style.display='block';b.textContent='⚠️ Error: '+(e&&e.message?e.message:e);}
+}
+window.addEventListener('error',function(ev){
+  var m=(ev&&ev.message)?ev.message:'';
+  if(/ResizeObserver loop/i.test(m))return;
+  showErr(ev);
+});
+
+(function(){
+try{
+
+var $=function(s){return document.querySelector(s);};
+var $$=function(s){return document.querySelectorAll(s);};
+var cv=document.getElementById('cv');
+var wrap=document.getElementById('graphWrap');
+var ctx=cv.getContext('2d');
+
+var state={target:{a:1,b:0,c:0,d:0},cur:{a:1,b:0,c:0,d:0},span:8,
+           showCurve:true,showPts:true,hover:null,view:null};
+var pts=[];
+var W=0,H=0;
+
+function fT(x){var p=state.target;return p.a*x*x*x+p.b*x*x+p.c*x+p.d;}
+function fC(x){var p=state.cur;   return p.a*x*x*x+p.b*x*x+p.c*x+p.d;}
+
+function fmt(n){
+  if(!isFinite(n))return '∞';
+  if(Math.abs(n)>=1e6)return n.toExponential(2);
+  return parseFloat(n.toPrecision(6)).toString().replace('-','−');
+}
+function r2(v){return Math.round(v*100)/100;}
+
+/* ---- tamaño del lienzo con DEBOUNCE ---- */
+var roPend=false;
+function sizeCanvas(){
+  var w=Math.max(240,Math.floor(wrap.clientWidth||cv.clientWidth||600));
+  var h;
+  var fsMode=document.body.classList.contains('fsopen');
+  if(fsMode){h=Math.max(260,window.innerHeight-330);}
+  else if(window.innerWidth<=820){h=Math.max(210,Math.min(330,Math.round(window.innerHeight*0.42)));}
+  else{h=Math.max(300,Math.min(480,Math.round(w*0.64)));}
+  var dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(w*dpr);
+  cv.height=Math.round(h*dpr);
+  cv.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  W=w;H=h;
+}
+function scheduleResize(){
+  if(roPend)return;
+  roPend=true;
+  requestAnimationFrame(function(){roPend=false;sizeCanvas();});
+}
+if(window.ResizeObserver){
+  try{new ResizeObserver(scheduleResize).observe(wrap);}catch(e){}
+}
+window.addEventListener('resize',scheduleResize);
+window.addEventListener('orientationchange',function(){setTimeout(sizeCanvas,300);});
+
+/* ============================================================
+   VISTA ROBUSTA v3 — la curva SIEMPRE se ve.
+   Prioridad del centrado:
+   1) Si hay máximo y mínimo local visibles → centro entre ellos.
+   2) Si NO hay picos (discriminante ≤ 0, cúbica monótona)
+      → centro en el PUNTO DE INFLEXIÓN  ★ (arregla x³−6x²+12x)
+   3) Si a ≈ 0 → centro en el rango natural.
+   La altura siempre queda limitada (Y ≤ 1.5 × X).
+   ============================================================ */
+function computeView(){
+  var xMin=-state.span/2,xMax=state.span/2,i,x,y;
+  var extLim=Math.max(state.span,30);
+  for(i=0;i<pts.length;i++){
+    if(isFinite(pts[i].x)&&Math.abs(pts[i].x)<=extLim){
+      if(pts[i].x-0.5<xMin)xMin=pts[i].x-0.5;
+      if(pts[i].x+0.5>xMax)xMax=pts[i].x+0.5;
+    }
+  }
+  var xSpan=xMax-xMin;
+  var maxYS=xSpan*1.5;
+  var minYS=xSpan*0.22;
+
+  /* rango natural de la curva en la ventana (siempre) */
+  var yMin=Infinity,yMax=-Infinity,N=220;
+  for(i=0;i<=N;i++){
+    x=xMin+(xMax-xMin)*i/N; y=fT(x);
+    if(isFinite(y)){if(y<yMin)yMin=y;if(y>yMax)yMax=y;}
+  }
+  if(!isFinite(yMin)){yMin=-1;yMax=1;}
+  if(yMax-yMin<1e-9){yMin-=1;yMax+=1;}
+
+  var a=state.target.a,b=state.target.b,c=state.target.c;
+  var yc=null,ysNeed=0;
+
+  if(Math.abs(a)>1e-9){
+    var disc=b*b-3*a*c;
+    if(disc>1e-9){
+      var sq=Math.sqrt(disc);
+      var xc1=(-b-sq)/(3*a),xc2=(-b+sq)/(3*a);
+      if(xc1>=xMin&&xc1<=xMax&&xc2>=xMin&&xc2<=xMax){
+        var yv1=fT(xc1),yv2=fT(xc2);
+        var hi=Math.max(yv1,yv2),lo=Math.min(yv1,yv2);
+        yc=(hi+lo)/2;
+        ysNeed=(hi-lo)*1.9+1;
+      }
+    }
+    if(yc===null){
+      /* ★ CASO x³−6x²+12x: sin picos → centrar en la inflexión */
+      var xi=-b/(3*a);
+      yc=fT(xi);
+      var half=Math.max(Math.abs(yMin-yc),Math.abs(yMax-yc));
+      ysNeed=Math.min(half*2,maxYS);   /* se recorta al tope */
+    }
+  }
+  if(yc===null){
+    /* a ≈ 0: rango natural */
+    yc=(yMin+yMax)/2;
+    ysNeed=(yMax-yMin)*1.05;
+  }
+
+  /* incluir puntos de la tabla cercanos */
+  for(i=0;i<pts.length;i++){
+    if(isFinite(pts[i].y)&&Math.abs(pts[i].y-yc)<=maxYS){
+      var dd=2*Math.abs(pts[i].y-yc)+1;
+      if(dd>ysNeed)ysNeed=dd;
+    }
+  }
+
+  var ys=Math.min(Math.max(ysNeed,minYS),maxYS);
+  var yA=yc-ys/2,yB=yc+ys/2;
+  var padY=ys*0.06,padX=xSpan*0.03;
+  return {xMin:xMin-padX,xMax:xMax+padX,yMin:yA-padY,yMax:yB+padY};
+}
+function niceStep(span,px,minPx){
+  var raw=minPx/px*span;
+  var p=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10));
+  var m=[1,2,5,10];
+  for(var i=0;i<4;i++){if(m[i]*p>=raw)return m[i]*p;}
+  return 10*p;
+}
+
+/* ---- anti-superposición de etiquetas ---- */
+var placed=[];
+function boxesOverlap(a,b){
+  return !(a.x+a.w<b.x||b.x+b.w<a.x||a.y+a.h<b.y||b.y+b.h<a.y);
+}
+
+/* ---- dibujo ---- */
+function draw(){
+  if(!W||!H)return;
+  if(!state.view)state.view=computeView();
+  var v=state.view;
+  var sx=v.xMax-v.xMin,sy=v.yMax-v.yMin;
+  if(!(sx>0)||!(sy>0))return;
+  function X(x){return (x-v.xMin)/sx*W;}
+  function Y(y){return H-(y-v.yMin)/sy*H;}
+
+  var mobile=W<500;
+  ctx.clearRect(0,0,W,H);
+  var stX=niceStep(sx,W,70),stY=niceStep(sy,H,42),x,y,px,py,i;
+
+  ctx.strokeStyle='#efe9fb';ctx.lineWidth=1;
+  for(x=Math.ceil(v.xMin/stX)*stX;x<=v.xMax;x+=stX){
+    px=X(x);ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();}
+  for(y=Math.ceil(v.yMin/stY)*stY;y<=v.yMax;y+=stY){
+    py=Y(y);ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke();}
+
+  ctx.strokeStyle='#7a6f96';ctx.lineWidth=1.6;
+  if(v.yMin<0&&v.yMax>0){ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(W,Y(0));ctx.stroke();}
+  if(v.xMin<0&&v.xMax>0){ctx.beginPath();ctx.moveTo(X(0),0);ctx.lineTo(X(0),H);ctx.stroke();}
+  ctx.fillStyle='#7a6f96';ctx.font='bold 12px Segoe UI';
+  ctx.fillText('x',W-16,(v.yMin<0&&v.yMax>0)?Y(0)-8:14);
+  ctx.fillText('y',(v.xMin<0&&v.xMax>0)?X(0)+8:8,16);
+  ctx.font=mobile?'9px Segoe UI':'11px Segoe UI';ctx.fillStyle='#9a8fb5';
+  for(x=Math.ceil(v.xMin/stX)*stX;x<=v.xMax;x+=stX){
+    if(Math.abs(x)>1e-9)ctx.fillText(fmt(r2(x)),X(x)-8,(v.yMin<0&&v.yMax>0)?Y(0)+14:14);}
+  for(y=Math.ceil(v.yMin/stY)*stY;y<=v.yMax;y+=stY){
+    if(Math.abs(y)>1e-9)ctx.fillText(fmt(r2(y)),(v.xMin<0&&v.xMax>0)?X(0)+6:6,Y(y)+4);}
+
+  if(state.showCurve){
+    var g=ctx.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'#7c3aed');g.addColorStop(1,'#db2777');
+    ctx.strokeStyle=g;ctx.lineWidth=mobile?3:3.6;ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.beginPath();
+    var started=false;
+    for(px=0;px<=W;px+=2){
+      x=v.xMin+px/W*sx; y=fC(x); py=Y(y);
+      if(!isFinite(py)){started=false;continue;}
+      if(!started){ctx.moveTo(px,py);started=true;}
+      else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+  }
+
+  if(state.showPts){
+    placed=[];
+    var rDot=mobile?4.5:6.5;
+    var th=mobile?13:20;
+    var off=mobile?6:9;
+    ctx.font=mobile?'bold 9px Segoe UI':'bold 12px Segoe UI';
+    for(i=0;i<pts.length;i++){
+      var p=pts[i];
+      if(!isFinite(p.x)||!isFinite(p.y))continue;
+      px=X(p.x);py=Y(p.y);
+      if(px<-30||px>W+30||py<-30||py>H+30)continue;
+      ctx.beginPath();ctx.arc(px,py,rDot,0,6.3);
+      ctx.fillStyle='#db2777';ctx.fill();
+      ctx.lineWidth=mobile?1.8:2.5;ctx.strokeStyle='#fff';ctx.stroke();
+      var txt='('+fmt(r2(p.x))+', '+fmt(r2(p.y))+')';
+      var tw=ctx.measureText(txt).width+(mobile?7:10);
+      var cands=[[px+off,py-th-3],[px+off,py+5],[px-tw-off,py-th-3],[px-tw-off,py+5]];
+      var box=null,c;
+      for(var k=0;k<4;k++){
+        c=cands[k];
+        var btest={x:c[0],y:c[1],w:tw,h:th};
+        if(c[0]<1||c[0]+tw>W-1||c[1]<1||c[1]+th>H-1)continue;
+        var ok=true;
+        for(var q=0;q<placed.length;q++){if(boxesOverlap(btest,placed[q])){ok=false;break;}}
+        if(ok){box=btest;break;}
+      }
+      if(box){
+        placed.push(box);
+        ctx.fillStyle='rgba(255,255,255,.93)';
+        ctx.fillRect(box.x,box.y,box.w,box.h);
+        ctx.lineWidth=1;ctx.strokeStyle='#e9d5ff';
+        ctx.strokeRect(box.x,box.y,box.w,box.h);
+        ctx.fillStyle='#6d28d9';
+        ctx.fillText(txt,box.x+(mobile?3:5),box.y+th-(mobile?3:5));
+      }
+    }
+  }
+
+  if(state.hover){
+    var hx=state.hover.x,hy=fT(hx);
+    px=X(hx);py=Y(hy);
+    ctx.setLineDash([5,5]);ctx.strokeStyle='#c4b5fd';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(px,py,mobile?5.5:7,0,6.3);
+    ctx.strokeStyle='#7c3aed';ctx.lineWidth=3;ctx.stroke();
+    var t2='x = '+fmt(r2(hx))+'   f(x) = '+fmt(r2(hy));
+    ctx.font=mobile?'bold 11px Segoe UI':'bold 13px Segoe UI';
+    var w2=ctx.measureText(t2).width+16;
+    var bx2=Math.min(Math.max(px-w2/2,6),W-w2-6);
+    ctx.fillStyle='#4c1d95';ctx.fillRect(bx2,6,w2,mobile?22:26);
+    ctx.fillStyle='#fff';ctx.fillText(t2,bx2+8,mobile?21:25);
+  }
+}
+
+/* ---- bucle continuo ---- */
+function tick(){
+  try{
+    var keys=['a','b','c','d'],k,d,vt,key,i;
+    for(i=0;i<4;i++){
+      k=keys[i]; d=state.target[k]-state.cur[k];
+      state.cur[k]=(Math.abs(d)>1e-4)?state.cur[k]+d*0.25:state.target[k];
+    }
+    vt=computeView();
+    if(!state.view)state.view=vt;
+    var vk=['xMin','xMax','yMin','yMax'];
+    for(i=0;i<4;i++){
+      key=vk[i]; d=vt[key]-state.view[key];
+      state.view[key]=(Math.abs(d)>1e-3*(Math.abs(vt[key])||1))?state.view[key]+d*0.3:vt[key];
+    }
+    draw();
+  }catch(e){showErr(e);}
+  requestAnimationFrame(tick);
+}
+
+/* ---- ecuación y análisis ---- */
+function buildEq(p){
+  var terms=[];
+  function add(v,suf){
+    if(v===0)return;
+    var abs=Math.abs(v);
+    terms.push({neg:v<0,coef:(suf&&abs===1)?'':fmt(abs),suf:suf});
+  }
+  add(p.a,'x³');add(p.b,'x²');add(p.c,'x');add(p.d,'');
+  if(!terms.length)return 'f(x) = 0';
+  var s='';
+  for(var i=0;i<terms.length;i++){
+    var t=terms[i];
+    s+=(i===0?(t.neg?'−':''):(t.neg?' − ':' + '))+t.coef+t.suf;
+  }
+  return 'f(x) = '+s;
+}
+function findRoots(){
+  var roots=[],N=12000,x0=-60,x1=60,i,x,v;
+  var px=x0,pv=fT(x0);
+  for(i=1;i<=N;i++){
+    x=x0+(x1-x0)*i/N; v=fT(x);
+    if(pv*v<0){
+      var lo=px,hi=x,flo=pv,k,fm,m;
+      for(k=0;k<60;k++){
+        m=(lo+hi)/2; fm=fT(m);
+        if(fm===0){lo=m;hi=m;break;}
+        if(flo*fm<0)hi=m;else{lo=m;flo=fm;}
+      }
+      roots.push((lo+hi)/2);
+    }
+    px=x;pv=v;
+  }
+  roots.sort(function(a,b){return a-b;});
+  var out=[];
+  for(i=0;i<roots.length;i++){
+    if(!out.length||Math.abs(roots[i]-out[out.length-1])>1e-4)out.push(roots[i]);
+  }
+  return out;
+}
+function updateAnalysis(){
+  var p=state.target,a=p.a,b=p.b,c=p.c,d=p.d;
+  var eq=buildEq(p);
+  $('#eq').textContent=eq;
+  $('#eqMini').textContent=eq;
+  $('#warnA').style.display=(a===0)?'block':'none';
+  $('#iGrado').textContent=a===0?(b!==0?2:(c!==0?1:0)):3;
+  $('#iCorteY').textContent='(0, '+fmt(d)+')';
+  var r=findRoots();
+  $('#iRaices').textContent=r.length?r.map(function(v){return 'x ≈ '+fmt(r2(v));}).join(' ; '):'ninguna en la vista';
+  if(a!==0){
+    var disc=b*b-3*a*c;
+    if(disc>1e-9){
+      var s=Math.sqrt(disc);
+      var x1=(-b-s)/(3*a),x2=(-b+s)/(3*a);
+      var y1=fT(x1),y2=fT(x2);
+      var P=(y1>=y2)?[[x1,y1],[x2,y2]]:[[x2,y2],[x1,y1]];
+      $('#iCrit').textContent='Máx ('+fmt(r2(P[0][0]))+', '+fmt(r2(P[0][1]))+') · Mín ('
+        +fmt(r2(P[1][0]))+', '+fmt(r2(P[1][1]))+')';
+    }else{
+      /* ★ caso monótono: mostrar el punto de inflexión */
+      var xi=-b/(3*a);
+      $('#iCrit').textContent='Sin máx/mín · Punto de inflexión ('
+        +fmt(r2(xi))+', '+fmt(r2(fT(xi)))+')';
+    }
+  }else{
+    $('#iCrit').textContent='—';
+  }
+  $('#iColas').textContent=a>0?'baja a la izquierda ↙ y sube a la derecha ↗'
+    :(a<0?'sube a la izquierda ↖ y baja a la derecha ↘':'—');
+}
+
+/* ---- tabla ---- */
+var xins=$$('.xin'),youts=$$('.yout');
+function updateTable(){
+  pts=[];
+  for(var i=0;i<xins.length;i++){
+    var v=xins[i].value.trim();
+    if(v===''){youts[i].textContent='–';continue;}
+    var x=parseFloat(v);
+    if(isNaN(x)){youts[i].textContent='¿?';continue;}
+    var y=fT(x);
+    youts[i].textContent=fmt(r2(y));
+    pts.push({x:x,y:y});
+  }
+}
+function update(){
+  updateTable();updateAnalysis();
+  try{localStorage.setItem('cubica2',JSON.stringify(
+    {t:state.target,xs:[].map.call(xins,function(i){return i.value;})}));}catch(e){}
+}
+function setCoef(t,v){
+  state.target[t]=r2(Math.max(-9999,Math.min(9999,v)));
+  document.getElementById('in-'+t).value=state.target[t];
+  update();
+}
+
+/* ---- eventos ---- */
+['a','b','c','d'].forEach(function(t){
+  document.getElementById('in-'+t).addEventListener('input',function(e){
+    var v=parseFloat(e.target.value);
+    if(!isNaN(v))setCoef(t,v);
+  });
+});
+ $$('.step').forEach(function(b){
+  var t=b.getAttribute('data-t'),dir=parseFloat(b.getAttribute('data-d'));
+  var iv=null,to=null;
+  function once(){
+    var v=Math.abs(state.target[t]);
+    var st=(v>=100)?10:(v>=20)?5:(v>=5)?1:0.5;
+    setCoef(t,state.target[t]+dir*st);
+  }
+  b.addEventListener('pointerdown',function(e){e.preventDefault();once();
+    to=setTimeout(function(){iv=setInterval(once,90);},420);});
+  ['pointerup','pointerleave','pointercancel'].forEach(function(ev){
+    b.addEventListener(ev,function(){clearTimeout(to);clearInterval(iv);});});
+  b.addEventListener('contextmenu',function(e){e.preventDefault();});
+});
+ $$('.ex').forEach(function(ch){
+  ch.addEventListener('click',function(){
+    var v=ch.getAttribute('data-v').split(',');
+    setCoef('a',parseFloat(v[0]));setCoef('b',parseFloat(v[1]));
+    setCoef('c',parseFloat(v[2]));setCoef('d',parseFloat(v[3]));
+  });
+});
+document.getElementById('rndBtn').addEventListener('click',function(){
+  function R(){var v=r2(Math.random()*8-4);return v===0?1:v;}
+  setCoef('a',R());setCoef('b',R());setCoef('c',R());setCoef('d',R());
+});
+[].forEach.call(xins,function(inp){inp.addEventListener('input',update);});
+document.getElementById('fillBtn').addEventListener('click',function(){
+  var v=[-2,-1,0,1,2,3];
+  for(var i=0;i<xins.length;i++)xins[i].value=v[i];
+  update();
+});
+document.getElementById('clrBtn').addEventListener('click',function(){
+  [].forEach.call(xins,function(i){i.value='';});update();
+});
+document.getElementById('tgCurve').addEventListener('change',function(e){state.showCurve=e.target.checked;});
+document.getElementById('tgPts').addEventListener('change',function(e){state.showPts=e.target.checked;});
+document.getElementById('zin').addEventListener('click',function(){state.span=Math.max(2,state.span*0.7);});
+document.getElementById('zout').addEventListener('click',function(){state.span=Math.min(200,state.span*1.5);});
+document.getElementById('zhome').addEventListener('click',function(){state.span=8;});
+
+cv.addEventListener('pointerdown',function(e){
+  try{cv.setPointerCapture(e.pointerId);}catch(err){}
+  read(e);
+});
+cv.addEventListener('pointermove',function(e){if(e.buttons||e.pointerType==='mouse')read(e);});
+cv.addEventListener('pointerleave',function(){state.hover=null;});
+cv.addEventListener('pointerup',function(){state.hover=null;});
+function read(e){
+  var v=state.view;if(!v||!W)return;
+  var r=cv.getBoundingClientRect();
+  state.hover={x:v.xMin+(e.clientX-r.left)/W*(v.xMax-v.xMin)};
+}
+
+/* ---- MODO AMPLIAR: controles abajo ---- */
+var ctlHome=document.getElementById('ctlHome');
+var ctlSlot=document.getElementById('ctlSlot');
+document.getElementById('fsBtn').addEventListener('click',function(){
+  var on=document.body.classList.toggle('fsopen');
+  if(on){ctlSlot.appendChild(ctlHome);}
+  else{document.getElementById('cCard').insertBefore(ctlHome,
+        document.getElementById('cCard').children[1]);}
+  this.textContent=on?'✕ Cerrar':'⛶ Ampliar';
+  sizeCanvas();
+});
+
+/* ---- QR ---- */
+document.getElementById('genQr').addEventListener('click',function(){
+  var u=document.getElementById('qrUrl').value.trim();
+  if(!u){alert('Primero pega el enlace de tu página 🙏');return;}
+  var img=document.getElementById('qrImg');
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(u);
+  img.style.display='block';
+  img.onload=function(){document.getElementById('qrErr').style.display='none';};
+  img.onerror=function(){document.getElementById('qrErr').style.display='block';};
+});
+
+/* ---- inicio ---- */
+try{
+  var s=JSON.parse(localStorage.getItem('cubica2')||'null');
+  if(s&&s.t){
+    ['a','b','c','d'].forEach(function(k){
+      if(typeof s.t[k]==='number')state.target[k]=s.t[k];
+      document.getElementById('in-'+k).value=state.target[k];
+    });
+    if(s.xs)[].forEach.call(xins,function(inp,i){if(s.xs[i]!==undefined)inp.value=s.xs[i];});
+  }
+}catch(e){}
+sizeCanvas();
+update();
+requestAnimationFrame(tick);
+
+}catch(e){showErr(e);}
+})();
+</script>
+</body>
+</html>
